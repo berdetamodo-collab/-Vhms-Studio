@@ -1,0 +1,104 @@
+
+graph TD
+    %% --- LAYER 1: UI / PRESENTATION LAYER ---
+    subgraph UI_Layer [React Frontend (App.tsx)]
+        UserInput[User Inputs Data]
+        StateMgr{State Manager}
+        InputPanel[InputPanel.tsx]
+        OutputPanel[OutputPanel.tsx]
+        
+        UserInput -->|Subject/Scene/Ref/Outfit| InputPanel
+        InputPanel -->|Set State| StateMgr
+        
+        Verify[performValidation()]
+        StateMgr --> Verify
+    end
+
+    %% --- LAYER 2: INGESTION & OPTIMIZATION ---
+    subgraph Ingestion_Layer [Phase 1: Ingestion]
+        Verify -->|Valid| Optimizer[imageUtils.ts / optimizeImage()]
+        Optimizer -->|Resize & Compress| BlobData[Optimized Blobs]
+        
+        LinkScraper[linkScraperService.ts] -->|Fetch URL| Optimizer
+    end
+
+    %% --- LAYER 3: COGNITIVE DECONSTRUCTION (ANALYSIS) ---
+    subgraph Analysis_Layer [Phase 2: Cognitive Deconstruction]
+        GeminiService[geminiService.ts]
+        CacheService[cacheService.ts]
+        
+        BlobData --> GeminiService
+        
+        %% Branching Logic based on Mode
+        ModeCheck{Scene Source?}
+        GeminiService --> ModeCheck
+        
+        %% Branch A: Generate Mode
+        ModeCheck -->|Generate| NISF[analyzeNarrativeIdentity]
+        NISF -->|Prompt: NISF Schema| API_Text[Google GenAI (Text)]
+        
+        %% Branch B: Upload/Ref Mode
+        ModeCheck -->|Upload/Ref| Unified[performUnifiedAnalysis]
+        Unified -->|Prompt: Unified Schema| API_Text
+        
+        %% Physics Engine (Only Upload)
+        Unified -->|Result| PhysicsCheck{Is Upload?}
+        PhysicsCheck -->|Yes| Dependent[performDependentAdaptations]
+        Dependent -->|Prompt: Physics/Shadow| API_Text
+        
+        %% Caching Mechanism
+        API_Text -->|Response JSON| CacheService
+        CacheService -->|Store Key| LocalStorage
+        CacheService -->|Return Data| StateMgr
+    end
+
+    %% --- LAYER 4: DIRECTIVE SYNTHESIS (LOGIC) ---
+    subgraph Synthesis_Layer [Phase 3: Directive Synthesis]
+        PromptUtils[promptUtils.ts]
+        
+        StateMgr -->|Context & Data| PromptUtils
+        
+        %% Protocol Injection
+        PromptUtils -->|Inject| Proto1[Realism Protocols]
+        PromptUtils -->|Inject| Proto2[Morphology Protocols]
+        PromptUtils -->|Inject| Proto3[Textile Mapping]
+        
+        %% Construction Logic
+        Construct{constructFinalPrompt}
+        Proto1 & Proto2 & Proto3 --> Construct
+        Construct -->|Final String| FinalPrompt[Director's Briefing]
+    end
+
+    %% --- LAYER 5: LATENT GENERATION (EXECUTION) ---
+    subgraph Generation_Layer [Phase 4: Latent Generation]
+        ExecGen[generateFinalImage]
+        
+        FinalPrompt --> ExecGen
+        BlobData --> ExecGen
+        
+        %% Role Assignment (Prevent Contamination)
+        RoleAssign{Assign Roles}
+        ExecGen --> RoleAssign
+        
+        RoleAssign -->|Subject| Role1[IMAGE 1: ACTOR_SOURCE]
+        RoleAssign -->|Upload Mode| Role2[IMAGE 2: SCENE_CONTAINER]
+        RoleAssign -->|Reference Mode| Role3[IMAGE 2: STYLE_CONFIG]
+        RoleAssign -->|Outfit| Role4[IMAGE 3: OUTFIT_SOURCE]
+        
+        %% Final API Call
+        Payload[Multi-Part Payload]
+        Role1 & Role2 & Role3 & Role4 --> Payload
+        Payload -->|Call| API_Image[Google GenAI (Image Model)]
+    end
+
+    %% --- LAYER 6: POST-PROCESSING ---
+    subgraph Post_Layer [Phase 5: Harmonization]
+        API_Image -->|Raw Image URL| CheckHarmonize{Harmonize?}
+        CheckHarmonize -->|Yes| Harmonizer[performHarmonization]
+        Harmonizer -->|Prompt: Film Grain/Color Match| API_Image
+        CheckHarmonize -->|No| FinalOutput
+        Harmonizer --> FinalOutput[Final Composite]
+    end
+
+    FinalOutput --> OutputPanel
+    FinalOutput --> History[HistoryPanel / LocalStorage]
